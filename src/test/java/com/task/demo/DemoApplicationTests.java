@@ -1,20 +1,21 @@
 package com.task.demo;
 
 import com.task.demo.entity.Account;
-import com.task.demo.payload.response.ResponseEntity;
-import com.task.demo.repository.AccountRepository;
 import com.task.demo.payload.request.CreateAccountRequest;
 import com.task.demo.payload.request.TransactionRequest;
 import com.task.demo.payload.request.TransferRequest;
+import com.task.demo.payload.response.ResponseObject;
+import com.task.demo.repository.AccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -35,24 +36,26 @@ class DemoApplicationTests {
 		accountRepository.deleteAll();
 	}
 
-
 	@Test
 	void createAccount() {
 		CreateAccountRequest request = new CreateAccountRequest();
 		request.setAccountNumber("99999");
 		request.setInitialBalance(BigDecimal.valueOf(5000));
 
-		org.springframework.http.ResponseEntity<ResponseEntity<?>> response = restTemplate.exchange(
+		ResponseEntity<ResponseObject<Account>> response = restTemplate.exchange(
 				"/api/accounts",
 				HttpMethod.POST,
 				new HttpEntity<>(request),
-				new ParameterizedTypeReference<ResponseEntity<?>>() {}
+				new ParameterizedTypeReference<>() {
+				}
 		);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		assertThat(response.getBody().getStatus()).isEqualTo(HttpStatus.CREATED);
 		assertThat(response.getBody()).isNotNull();
-/*		assertThat(response.getBody().getBody().getAccountNumber()).isEqualTo("99999");
-		assertThat(response.getBody().getBody().getBalance()).isEqualByComparingTo(BigDecimal.valueOf(5000));*/
+
+		Account account = response.getBody().getBody();
+		assertThat(account.getAccountNumber()).isEqualTo("99999");
+		assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.valueOf(5000));
 	}
 
 	@Test
@@ -60,11 +63,16 @@ class DemoApplicationTests {
 		Account account = new Account("12345", BigDecimal.valueOf(1000));
 		accountRepository.save(account);
 
-		org.springframework.http.ResponseEntity response = restTemplate.getForEntity("/api/accounts/12345", ResponseEntity.class);
+		ResponseEntity<ResponseObject<Account>> response = restTemplate.exchange(
+				"/api/accounts/12345",
+				HttpMethod.GET,
+				null,
+				new ParameterizedTypeReference<>() {
+				}
+		);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-		ResponseEntity<Account> body = (ResponseEntity<Account>) response.getBody();
+		ResponseObject<Account> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getBody().getAccountNumber()).isEqualTo("12345");
 		assertThat(body.getBody().getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1000));
@@ -76,11 +84,16 @@ class DemoApplicationTests {
 		Account account2 = new Account("67890", BigDecimal.valueOf(2000));
 		accountRepository.saveAll(List.of(account1, account2));
 
-		org.springframework.http.ResponseEntity response = restTemplate.getForEntity("/api/accounts", ResponseEntity.class);
+		ResponseEntity<ResponseObject<List<Account>>> response = restTemplate.exchange(
+				"/api/accounts",
+				HttpMethod.GET,
+				null,
+				new ParameterizedTypeReference<>() {
+				}
+		);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-		ResponseEntity<List<Account>> body = (ResponseEntity<List<Account>>) response.getBody();
+		ResponseObject<List<Account>> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getBody()).hasSize(2);
 	}
@@ -93,11 +106,16 @@ class DemoApplicationTests {
 		TransactionRequest request = new TransactionRequest();
 		request.setAmount(BigDecimal.valueOf(200));
 
-		org.springframework.http.ResponseEntity response = restTemplate.postForEntity("/api/accounts/12345/deposit", request, ResponseEntity.class);
+		ResponseEntity<ResponseObject<Account>> response = restTemplate.exchange(
+				"/api/accounts/12345/deposit",
+				HttpMethod.POST,
+				new HttpEntity<>(request),
+				new ParameterizedTypeReference<>() {
+				}
+		);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-		ResponseEntity<Account> body = (ResponseEntity<Account>) response.getBody();
+		ResponseObject<Account> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getBody().getBalance()).isEqualByComparingTo(BigDecimal.valueOf(1200));
 	}
@@ -110,11 +128,16 @@ class DemoApplicationTests {
 		TransactionRequest request = new TransactionRequest();
 		request.setAmount(BigDecimal.valueOf(100));
 
-		org.springframework.http.ResponseEntity response = restTemplate.postForEntity("/api/accounts/12345/withdraw", request, ResponseEntity.class);
+		ResponseEntity<ResponseObject<Account>> response = restTemplate.exchange(
+				"/api/accounts/12345/withdraw",
+				HttpMethod.POST,
+				new HttpEntity<>(request),
+				new ParameterizedTypeReference<>() {
+				}
+		);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-		ResponseEntity<Account> body = (ResponseEntity<Account>) response.getBody();
+		ResponseObject<Account> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getBody().getBalance()).isEqualByComparingTo(BigDecimal.valueOf(900));
 	}
@@ -130,11 +153,16 @@ class DemoApplicationTests {
 		transferRequest.setTargetAccountNumber("67890");
 		transferRequest.setAmount(BigDecimal.valueOf(500));
 
-		org.springframework.http.ResponseEntity response = restTemplate.postForEntity("/api/accounts/transfer", transferRequest, ResponseEntity.class);
+		ResponseEntity<ResponseObject<String>> response = restTemplate.exchange(
+				"/api/accounts/transfer",
+				HttpMethod.POST,
+				new HttpEntity<>(transferRequest),
+				new ParameterizedTypeReference<>() {
+				}
+		);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-		ResponseEntity<String> body = (ResponseEntity<String>) response.getBody();
+		ResponseObject<String> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getBody()).isEqualTo("Transfer successfully executed");
 
@@ -150,11 +178,16 @@ class DemoApplicationTests {
 		TransactionRequest request = new TransactionRequest();
 		request.setAmount(BigDecimal.valueOf(200));
 
-		org.springframework.http.ResponseEntity response = restTemplate.postForEntity("/api/accounts/99999/deposit", request, ResponseEntity.class);
+		ResponseEntity<ResponseObject<String>> response = restTemplate.exchange(
+				"/api/accounts/99999/deposit",
+				HttpMethod.POST,
+				new HttpEntity<>(request),
+				new ParameterizedTypeReference<>() {
+				}
+		);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-
-		ResponseEntity<String> body = (ResponseEntity<String>) response.getBody();
+		assertThat(response.getBody().getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+		ResponseObject<String> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getBody()).contains("Account with number 99999 does not exist");
 	}
@@ -167,10 +200,16 @@ class DemoApplicationTests {
 		TransactionRequest request = new TransactionRequest();
 		request.setAmount(BigDecimal.valueOf(200));
 
-		org.springframework.http.ResponseEntity response = restTemplate.postForEntity("/api/accounts/12345/withdraw", request, ResponseEntity.class);
+		ResponseEntity<ResponseObject<String>> response = restTemplate.exchange(
+				"/api/accounts/12345/withdraw",
+				HttpMethod.POST,
+				new HttpEntity<>(request),
+				new ParameterizedTypeReference<>() {
+				}
+		);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-		ResponseEntity<String> body = (ResponseEntity<String>) response.getBody();
+		assertThat(response.getBody().getStatus()).isEqualTo(HttpStatus.CONFLICT);
+		ResponseObject<String> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getBody()).contains("Insufficient balance");
 	}
@@ -182,10 +221,16 @@ class DemoApplicationTests {
 		transferRequest.setTargetAccountNumber("67890");
 		transferRequest.setAmount(BigDecimal.valueOf(500));
 
-		org.springframework.http.ResponseEntity response = restTemplate.postForEntity("/api/accounts/transfer", transferRequest, ResponseEntity.class);
+		ResponseEntity<ResponseObject<String>> response = restTemplate.exchange(
+				"/api/accounts/transfer",
+				HttpMethod.POST,
+				new HttpEntity<>(transferRequest),
+				new ParameterizedTypeReference<>() {
+				}
+		);
 
-		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-		ResponseEntity<String> body = (ResponseEntity<String>) response.getBody();
+		assertThat(response.getBody().getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+		ResponseObject<String> body = response.getBody();
 		assertThat(body).isNotNull();
 		assertThat(body.getBody()).contains("Account with number 12345 does not exist");
 	}

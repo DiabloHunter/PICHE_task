@@ -6,7 +6,7 @@ import com.task.demo.exception.TransactionException;
 import com.task.demo.payload.request.CreateAccountRequest;
 import com.task.demo.payload.request.TransactionRequest;
 import com.task.demo.payload.request.TransferRequest;
-import com.task.demo.payload.response.ResponseEntity;
+import com.task.demo.payload.response.ResponseObject;
 import com.task.demo.service.Operation;
 import com.task.demo.service.IAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,38 +32,38 @@ public class AccountController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createAccount(@RequestBody CreateAccountRequest request) {
+    public ResponseObject<Account> createAccount(@RequestBody CreateAccountRequest request) {
         return handleAccountOperation(() -> accountService.createAccount(request), HttpStatus.CREATED);
     }
 
     @GetMapping("/{accountNumber}")
-    public ResponseEntity<?> getAccount(@PathVariable String accountNumber) {
+    public ResponseObject<Account> getAccount(@PathVariable String accountNumber) {
         return handleAccountOperation(() -> accountService.getAccount(accountNumber), HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity<List<Account>> listAccounts() {
-        return ResponseEntity.<List<Account>>builder()
+    public ResponseObject<List<Account>> listAccounts() {
+        return ResponseObject.<List<Account>>builder()
                 .withBody(accountService.listAccounts())
                 .withStatus(HttpStatus.OK)
                 .build();
     }
 
     @PostMapping("/{accountNumber}/deposit")
-    public ResponseEntity<?> deposit(@PathVariable String accountNumber, @RequestBody TransactionRequest request) {
+    public ResponseObject<Account> deposit(@PathVariable String accountNumber, @RequestBody TransactionRequest request) {
         return handleAccountOperation(() -> accountService.deposit(accountNumber, request), HttpStatus.OK);
     }
 
     @PostMapping("/{accountNumber}/withdraw")
-    public ResponseEntity<?> withdraw(@PathVariable String accountNumber, @RequestBody TransactionRequest request) {
+    public ResponseObject<Account> withdraw(@PathVariable String accountNumber, @RequestBody TransactionRequest request) {
         return handleAccountOperation(() -> accountService.withdraw(accountNumber, request), HttpStatus.OK);
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<?> transfer(@RequestBody TransferRequest request) {
+    public ResponseObject<String> transfer(@RequestBody TransferRequest request) {
         try {
             accountService.transfer(request);
-            return ResponseEntity.<String>builder()
+            return ResponseObject.<String>builder()
                     .withBody("Transfer successfully executed")
                     .withStatus(HttpStatus.OK)
                     .build();
@@ -72,30 +72,30 @@ public class AccountController {
         }
     }
 
-    private ResponseEntity<?> buildErrorResponse(Exception e) {
+    private <T> ResponseObject<T> buildErrorResponse(Exception e) {
         if (e instanceof NotFoundException) {
-            return ResponseEntity.<String>builder()
-                    .withBody(e.getMessage())
+            return ResponseObject.<T>builder()
+                    .withBody((T) e.getMessage())
                     .withStatus(HttpStatus.NOT_FOUND)
                     .build();
         } else if (e instanceof TransactionException) {
-            return ResponseEntity.<String>builder()
-                    .withBody(e.getMessage())
+            return ResponseObject.<T>builder()
+                    .withBody((T) e.getMessage())
                     .withStatus(HttpStatus.CONFLICT)
                     .build();
         } else {
-            return ResponseEntity.<String>builder()
-                    .withBody(e.getMessage())
+            return ResponseObject.<T>builder()
+                    .withBody((T) e.getMessage())
                     .withStatus(HttpStatus.INTERNAL_SERVER_ERROR)
                     .build();
         }
     }
 
-    private ResponseEntity<?> handleAccountOperation(Operation operation, HttpStatus successStatus) {
+    private <T> ResponseObject<T> handleAccountOperation(Operation operation, HttpStatus successStatus) {
         try {
             Account result = operation.execute();
-            return ResponseEntity.<Account>builder()
-                    .withBody(result)
+            return ResponseObject.<T>builder()
+                    .withBody((T) result)
                     .withStatus(successStatus)
                     .build();
         } catch (Exception e) {

@@ -87,10 +87,15 @@ public class AccountService implements IAccountService {
     }
 
     @Transactional
-    public void transfer(TransferRequest request) {
-        Account sourceAccount = accountRepository.findByAccountNumber(request.getSourceAccountNumber());
-        Account targetAccount = accountRepository.findByAccountNumber(request.getTargetAccountNumber());
+    public void transfer(TransferRequest request) throws NotFoundException {
+        String sourceAccountNumber = request.getSourceAccountNumber();
+        String targetAccountNumber = request.getTargetAccountNumber();
+        Account sourceAccount = accountRepository.findByAccountNumber(sourceAccountNumber);
+        Account targetAccount = accountRepository.findByAccountNumber(targetAccountNumber);
 
+        if (sourceAccount == null || targetAccount == null) {
+            throw new NotFoundException(String.format("Account with number %s does not exist", sourceAccount == null ? sourceAccountNumber : targetAccountNumber));
+        }
         ReentrantLock firstLock = sourceAccount.getLock();
         ReentrantLock secondLock = targetAccount.getLock();
 

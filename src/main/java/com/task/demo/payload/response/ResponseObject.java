@@ -1,16 +1,17 @@
 package com.task.demo.payload.response;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
-public class ResponseEntity<T> {
+public class ResponseObject<T> {
 
     private T body;
-    private HttpStatusCode status;
+    private HttpStatus status;
 
-    private ResponseEntity() {
+    private ResponseObject() {
     }
 
-    private ResponseEntity(T body, HttpStatusCode status) {
+    private ResponseObject(T body, HttpStatus status) {
         this.body = body;
         this.status = status;
     }
@@ -30,20 +31,20 @@ public class ResponseEntity<T> {
     public static class Builder<T> {
 
         private T body;
-        private HttpStatusCode status;
+        private HttpStatus status;
 
         public Builder<T> withBody(T body) {
             this.body = body;
             return this;
         }
 
-        public Builder<T> withStatus(HttpStatusCode status) {
+        public Builder<T> withStatus(HttpStatus status) {
             this.status = status;
             return this;
         }
 
-        public ResponseEntity<T> build() {
-            return new ResponseEntity<>(body, status);
+        public ResponseObject<T> build() {
+            return new ResponseObject<>(body, status);
         }
 
     }
