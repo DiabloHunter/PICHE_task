@@ -1,4 +1,4 @@
-package com.task.demo.request;
+package com.task.demo.payload.request;
 
 import java.math.BigDecimal;
 
