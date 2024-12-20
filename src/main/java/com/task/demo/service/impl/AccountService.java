@@ -8,11 +8,12 @@ import com.task.demo.payload.request.CreateAccountRequest;
 import com.task.demo.payload.request.TransactionRequest;
 import com.task.demo.payload.request.TransferRequest;
 import com.task.demo.service.IAccountService;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -50,7 +51,14 @@ public class AccountService implements IAccountService {
     }
 
     @Transactional
-    public Account deposit(String accountNumber, TransactionRequest request) throws NotFoundException {
+    public Account deposit(String accountNumber, TransactionRequest request) throws NotFoundException, BadRequestException {
+        if(accountNumber == null) {
+            throw new BadRequestException("Account number must not be empty");
+        }
+        if(request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Deposit amount must be positive number");
+        }
+
         Account account = accountRepository.findByAccountNumber(accountNumber);
         if (account == null) {
             accountNotFoundException(accountNumber);
@@ -75,7 +83,14 @@ public class AccountService implements IAccountService {
 
     @Override
     @Transactional
-    public Account withdraw(String accountNumber, TransactionRequest request) throws NotFoundException {
+    public Account withdraw(String accountNumber, TransactionRequest request) throws NotFoundException, BadRequestException {
+        if(accountNumber == null) {
+            throw new BadRequestException("Account number must not be empty");
+        }
+        if(request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Withdrawal amount must be positive number");
+        }
+
         Account account = accountRepository.findByAccountNumber(accountNumber);
         if (account == null) {
             accountNotFoundException(accountNumber);
@@ -94,9 +109,16 @@ public class AccountService implements IAccountService {
     }
 
     @Transactional
-    public void transfer(TransferRequest request) throws NotFoundException {
+    public void transfer(TransferRequest request) throws NotFoundException, BadRequestException {
         String sourceAccountNumber = request.getSourceAccountNumber();
         String targetAccountNumber = request.getTargetAccountNumber();
+        if(sourceAccountNumber == null || targetAccountNumber == null) {
+            throw new BadRequestException("Source and target account number must not be empty");
+        }
+        if(request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Transfer amount must be positive number");
+        }
+
         if (sourceAccountNumber.equals(targetAccountNumber)) {
             throw new TransactionException("Invalid request parameters");
         }

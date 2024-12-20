@@ -8,6 +8,7 @@ import com.task.demo.payload.request.TransactionRequest;
 import com.task.demo.payload.request.TransferRequest;
 import com.task.demo.service.Operation;
 import com.task.demo.service.IAccountService;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -78,9 +79,10 @@ public class AccountController {
     private <T> ResponseEntity<T> buildErrorResponse(Exception e) {
         if (e instanceof NotFoundException) {
             return new ResponseEntity(e.getMessage(), HttpStatus.NOT_FOUND);
-
         } else if (e instanceof TransactionException) {
             return new ResponseEntity(e.getMessage(), HttpStatus.CONFLICT);
+        } else if (e instanceof BadRequestException) {
+            return new ResponseEntity(e.getMessage(), HttpStatus.BAD_REQUEST);
         } else {
             return new ResponseEntity(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
