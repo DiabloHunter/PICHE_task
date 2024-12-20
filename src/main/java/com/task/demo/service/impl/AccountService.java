@@ -16,13 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class AccountService implements IAccountService {
 
     private final AccountRepository accountRepository;
-    private Map<String, ReentrantLock> lockMap = new HashMap<>();
+    private Map<String, ReentrantLock> lockMap = new ConcurrentHashMap<>();
     @Autowired
     public AccountService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
